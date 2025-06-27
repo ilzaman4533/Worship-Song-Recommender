@@ -9,7 +9,7 @@ st.set_page_config(page_title="Worship Song Recommender", layout="centered")
 
 @st.cache_resource
 def load_resources():
-    df = pd.read_csv('data/worship_songs.csv')
+    df = pd.read_csv('Worship/data/worship_songs.csv')
     df['search_text'] = df['speed'] + ' ' + df['themes'] + ' ' + df['title'] + ' ' + df['artist']
     
     bi_encoder = SentenceTransformer('all-mpnet-base-v2')
