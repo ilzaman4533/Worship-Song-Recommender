@@ -2,6 +2,5 @@ streamlit
 pandas
 numpy
 sentence-transformers
-cross-encoder
 faiss-cpu
 scikit-learn
