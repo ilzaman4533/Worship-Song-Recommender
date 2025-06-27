@@ -147,8 +147,8 @@ if query:
             "#dcedc8", "#f8bbd0", "#d1c4e9", "#fbe9e7", "#e6ee9c"
         ]
 
-        for i, row in results.head(visible_count).iterrows():
-            bg_color = pastel_colors[i % len(pastel_colors)]
+        for idx, (_, row) in enumerate(results.head(visible_count).iterrows()):
+            bg_color = pastel_colors[idx % len(pastel_colors)]
             st.markdown(f"""
                 <div class="song-card" style="background-color: {bg_color};">
                     <div class="song-title">🎶 {row['title']} <span style='font-weight:normal;'>– {row['artist']}</span></div>
