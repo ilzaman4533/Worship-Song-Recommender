@@ -56,7 +56,12 @@ def recommend(query, top_k=20, candidate_pool=len(df)):
     temp_index.add(local_embeddings)
     distances, candidate_idxs = temp_index.search(query_emb, candidate_pool)
 
-    candidates = filtered_df.iloc[candidate_idxs[0]].copy()
+    # Get candidate rows
+    raw_candidates = filtered_df.iloc[candidate_idxs[0]].copy()
+
+    # Drop exact duplicates by title + artist
+    candidates = raw_candidates.drop_duplicates(subset=['title', 'artist']).reset_index(drop=True)
+
 
     cross_inputs = [
         (query, row['speed'] + " " + row['themes'] + " " + row['lyrics']) 
