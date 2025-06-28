@@ -30,13 +30,13 @@ def extract_speed_filter(query):
     query_lower = query.lower()
     if re.search(r"\b(slow|slower|slowly)\b", query_lower):
         return "slow"
-    elif re.search(r"\b(mid|middle|medium|moderate)\b", query_lower):
+    elif re.search(r"\b(mid|middle|medium|moderate|mid-tempo|midtempo)\b", query_lower):
         return "middle"
     elif re.search(r"\b(fast|faster|quick|upbeat)\b", query_lower):
         return "fast"
     return None
 
-def recommend(query, top_k=20, candidate_pool=50):
+def recommend(query, top_k=20, candidate_pool=len(df)):
     speed_filter = extract_speed_filter(query)
 
     filtered_df = df
@@ -55,7 +55,7 @@ def recommend(query, top_k=20, candidate_pool=50):
     temp_index = faiss.IndexFlatIP(local_embeddings.shape[1])
     temp_index.add(local_embeddings)
     distances, candidate_idxs = temp_index.search(query_emb, candidate_pool)
-    
+
     candidates = filtered_df.iloc[candidate_idxs[0]].copy()
 
     cross_inputs = [
@@ -65,9 +65,12 @@ def recommend(query, top_k=20, candidate_pool=50):
     cross_scores = cross_encoder.predict(cross_inputs)
 
     candidates['score'] = cross_scores
-    candidates = candidates.sort_values(by='score', ascending=False).head(top_k)
+
+    # Stable sort to prevent shuffling or duplicate views
+    candidates = candidates.sort_values(by=['score', 'title'], ascending=[False, True]).head(top_k)
 
     return candidates.reset_index(drop=True)
+
 
 # --- UI Styling ---
 st.markdown("""
@@ -140,14 +143,14 @@ if query:
     if results.empty:
         st.warning("No matching songs found. Try adjusting your query or speed filter.")
     else:
-        st.write(f"🎧 Showing top {visible_count} results:")
+        st.write(f"🎧 Showing top {min(visible_count, len(results))} of {len(results)} results:")
 
         pastel_colors = [
             "#e0f7fa", "#ffe0b2", "#f3e5f5", "#e1f5fe", "#fff9c4",
             "#dcedc8", "#f8bbd0", "#d1c4e9", "#fbe9e7", "#e6ee9c"
         ]
 
-        for idx, (_, row) in enumerate(results.head(visible_count).iterrows()):
+        for idx, (_, row) in enumerate(results.iloc[:visible_count].iterrows()):
             bg_color = pastel_colors[idx % len(pastel_colors)]
             st.markdown(f"""
                 <div class="song-card" style="background-color: {bg_color};">
@@ -162,6 +165,7 @@ if query:
         if visible_count < 10:
             if st.button("🎵 See More"):
                 st.session_state.visible_count += 1
+
 else:
     st.info("Type a query to start finding songs.")
 
