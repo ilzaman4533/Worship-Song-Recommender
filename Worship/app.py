@@ -148,7 +148,7 @@ if query:
     if results.empty:
         st.warning("No matching songs found. Try adjusting your query or speed filter.")
     else:
-        st.write(f"🎧 Showing top {min(visible_count, len(results))} of {len(results)} results:")
+        st.write(f"🎧 Showing top {visible_count} results:")
 
         pastel_colors = [
             "#e0f7fa", "#ffe0b2", "#f3e5f5", "#e1f5fe", "#fff9c4",
