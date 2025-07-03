@@ -143,35 +143,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-if query:
-    if results.empty:
-        st.warning("No matching songs found. Try adjusting your query or speed filter.")
-    else:
-        st.write(f"🎧 Showing top {visible_count} results:")
-
-        pastel_colors = [
-            "#e0f7fa", "#ffe0b2", "#f3e5f5", "#e1f5fe", "#fff9c4",
-            "#dcedc8", "#f8bbd0", "#d1c4e9", "#fbe9e7", "#e6ee9c"
-        ]
-
-        for idx, (_, row) in enumerate(results.iloc[:visible_count].iterrows()):
-            bg_color = pastel_colors[idx % len(pastel_colors)]
-            st.markdown(f"""
-                <div class="song-card" style="background-color: {bg_color};">
-                    <div class="song-title">🎶 {row['title']} <span style='font-weight:normal;'>– {row['artist']}</span></div>
-                    <div class="song-meta"><strong>Score:</strong> {row['score']:.4f}</div>
-                    <div class="song-meta"><strong>Themes:</strong> {row['themes']}</div>
-                    <div class="song-meta"><strong>Speed:</strong> {row['speed'].capitalize()}</div>
-                    <div class="song-meta"><strong>Added by:</strong> {row['added_by']}</div>
-                    <a class="song-link" href="{row['pnwchords_link']}" target="_blank">🔗 View on PNWChords</a>
-                </div>
-            """, unsafe_allow_html=True)
-
-        if visible_count < 10:
-            if st.button("🎵 See More"):
-                st.session_state.visible_count += 1
-
 # --- Popup Button for Submission ---
 with st.expander("➕ Add a New Worship Song"):
     with st.form("song_submission_form", clear_on_submit=True):
@@ -230,3 +201,30 @@ with st.expander("➕ Add a New Worship Song"):
                     df_updated.to_csv(DATA_PATH, index=False)
                     st.success("✅ Song added successfully. Please reload to reflect changes in recommendations.")
 
+if query:
+    if results.empty:
+        st.warning("No matching songs found. Try adjusting your query or speed filter.")
+    else:
+        st.write(f"🎧 Showing top {visible_count} results:")
+
+        pastel_colors = [
+            "#e0f7fa", "#ffe0b2", "#f3e5f5", "#e1f5fe", "#fff9c4",
+            "#dcedc8", "#f8bbd0", "#d1c4e9", "#fbe9e7", "#e6ee9c"
+        ]
+
+        for idx, (_, row) in enumerate(results.iloc[:visible_count].iterrows()):
+            bg_color = pastel_colors[idx % len(pastel_colors)]
+            st.markdown(f"""
+                <div class="song-card" style="background-color: {bg_color};">
+                    <div class="song-title">🎶 {row['title']} <span style='font-weight:normal;'>– {row['artist']}</span></div>
+                    <div class="song-meta"><strong>Score:</strong> {row['score']:.4f}</div>
+                    <div class="song-meta"><strong>Themes:</strong> {row['themes']}</div>
+                    <div class="song-meta"><strong>Speed:</strong> {row['speed'].capitalize()}</div>
+                    <div class="song-meta"><strong>Added by:</strong> {row['added_by']}</div>
+                    <a class="song-link" href="{row['pnwchords_link']}" target="_blank">🔗 View on PNWChords</a>
+                </div>
+            """, unsafe_allow_html=True)
+
+        if visible_count < 10:
+            if st.button("🎵 See More"):
+                st.session_state.visible_count += 1
