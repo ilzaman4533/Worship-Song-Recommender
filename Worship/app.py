@@ -36,7 +36,7 @@ def extract_speed_filter(query):
     query_lower = query.lower()
     if re.search(r"\b(slow|slower|slowly)\b", query_lower):
         return "slow"
-    elif re.search(r"\b(mid|middle|medium|moderate|mid-tempo\midtempo)\b", query_lower):
+    elif re.search(r"\b(mid|middle|medium|moderate)\b", query_lower):
         return "middle"
     elif re.search(r"\b(fast|faster|quick|upbeat)\b", query_lower):
         return "fast"
@@ -75,80 +75,6 @@ def recommend(query, top_k=20, candidate_pool=50):
     candidates = candidates.sort_values(by=['score', 'title'], ascending=[False, True]).head(top_k)
 
     return candidates.reset_index(drop=True)
-
-# --- Styled Submission Section ---
-st.markdown("""
-    <style>
-    .submission-card {
-        background-color: #eef6f9;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0px 2px 6px rgba(0,0,0,0.06);
-        font-family: 'Segoe UI', sans-serif;
-        color: #1d3557;
-        margin-top: 32px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("<div class='submission-card'>", unsafe_allow_html=True)
-st.markdown("### 📤 Submit a New Worship Song")
-with st.form("song_submission_form", clear_on_submit=True):
-    new_title = st.text_input("🎵 Song Title")
-    new_artist = st.text_input("👤 Artist")
-    new_themes = st.text_input("🏷️ Themes (comma separated)")
-    new_speed = st.selectbox("🚦 Speed", ["slow", "middle", "fast"])
-    new_link = st.text_input("🔗 Link to Chords/Lyrics")
-    new_lyrics = st.text_area("📜 Lyrics")
-    new_added_by = st.text_input("🙋 Added by (Your Name)")
-
-    submitted = st.form_submit_button("Submit Song")
-
-    if submitted:
-        if not validators.url(new_link):
-            st.error("❌ Please enter a valid URL for the chord/lyrics link.")
-        elif not new_title or not new_artist or not new_added_by:
-            st.error("❌ Title, artist, and your name are required.")
-        else:
-            song_exists = df[
-                (df['title'].str.lower() == new_title.lower()) &
-                (df['artist'].str.lower() == new_artist.lower())
-            ]
-
-            if not song_exists.empty:
-                overwrite = st.radio("⚠️ This song already exists. Do you want to overwrite it?", ("Cancel", "Overwrite"))
-                if overwrite == "Overwrite":
-                    df.drop(song_exists.index, inplace=True)
-                    new_entry = pd.DataFrame([{
-                        'title': new_title,
-                        'artist': new_artist,
-                        'themes': new_themes,
-                        'speed': new_speed,
-                        'pnwchords_link': new_link,
-                        'lyrics': new_lyrics,
-                        'added_by': new_added_by,
-                        'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
-                    }])
-                    df_updated = pd.concat([df, new_entry], ignore_index=True)
-                    df_updated.to_csv(DATA_PATH, index=False)
-                    st.success("✅ Song updated successfully. Please reload to reflect changes in recommendations.")
-                else:
-                    st.info("❌ Submission cancelled.")
-            else:
-                new_entry = pd.DataFrame([{
-                    'title': new_title,
-                    'artist': new_artist,
-                    'themes': new_themes,
-                    'speed': new_speed,
-                    'pnwchords_link': new_link,
-                    'lyrics': new_lyrics,
-                    'added_by': new_added_by,
-                    'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
-                }])
-                df_updated = pd.concat([df, new_entry], ignore_index=True)
-                df_updated.to_csv(DATA_PATH, index=False)
-                st.success("✅ Song added successfully. Please reload to reflect changes in recommendations.")
-st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Song Display ---
 st.markdown("<div class='responsive-container'>", unsafe_allow_html=True)
@@ -203,4 +129,62 @@ else:
     st.info("Type a query to start finding songs.")
 
 st.markdown("</div>", unsafe_allow_html=True)
+
+# --- Popup Button for Submission ---
+with st.expander("➕ Add a New Worship Song"):
+    with st.form("song_submission_form", clear_on_submit=True):
+        new_title = st.text_input("🎵 Song Title")
+        new_artist = st.text_input("👤 Artist")
+        new_themes = st.text_input("🏷️ Themes (comma separated)")
+        new_speed = st.selectbox("🚦 Speed", ["slow", "middle", "fast"])
+        new_link = st.text_input("🔗 Link to Chords/Lyrics")
+        new_lyrics = st.text_area("📜 Lyrics")
+        new_added_by = st.text_input("🙋 Added by (Your Name)")
+
+        submitted = st.form_submit_button("Submit Song")
+
+        if submitted:
+            if not validators.url(new_link):
+                st.error("❌ Please enter a valid URL for the chord/lyrics link.")
+            elif not new_title or not new_artist or not new_added_by:
+                st.error("❌ Title, artist, and your name are required.")
+            else:
+                song_exists = df[
+                    (df['title'].str.lower() == new_title.lower()) &
+                    (df['artist'].str.lower() == new_artist.lower())
+                ]
+
+                if not song_exists.empty:
+                    overwrite = st.radio("⚠️ This song already exists. Do you want to overwrite it?", ("Cancel", "Overwrite"))
+                    if overwrite == "Overwrite":
+                        df.drop(song_exists.index, inplace=True)
+                        new_entry = pd.DataFrame([{
+                            'title': new_title,
+                            'artist': new_artist,
+                            'themes': new_themes,
+                            'speed': new_speed,
+                            'pnwchords_link': new_link,
+                            'lyrics': new_lyrics,
+                            'added_by': new_added_by,
+                            'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
+                        }])
+                        df_updated = pd.concat([df, new_entry], ignore_index=True)
+                        df_updated.to_csv(DATA_PATH, index=False)
+                        st.success("✅ Song updated successfully. Please reload to reflect changes in recommendations.")
+                    else:
+                        st.info("❌ Submission cancelled.")
+                else:
+                    new_entry = pd.DataFrame([{
+                        'title': new_title,
+                        'artist': new_artist,
+                        'themes': new_themes,
+                        'speed': new_speed,
+                        'pnwchords_link': new_link,
+                        'lyrics': new_lyrics,
+                        'added_by': new_added_by,
+                        'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
+                    }])
+                    df_updated = pd.concat([df, new_entry], ignore_index=True)
+                    df_updated.to_csv(DATA_PATH, index=False)
+                    st.success("✅ Song added successfully. Please reload to reflect changes in recommendations.")
 
