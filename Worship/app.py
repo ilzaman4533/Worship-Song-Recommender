@@ -98,6 +98,52 @@ if query and query != st.session_state.last_query:
 results = st.session_state.results
 visible_count = st.session_state.visible_count
 
+# --- UI Styling ---
+st.markdown("""
+    <style>
+    .responsive-container {
+        max-width: 700px;
+        margin: auto;
+        padding: 10px;
+    }
+    .song-card {
+        background-color: #f9f9f9;
+        padding: 18px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+        font-family: 'Segoe UI', sans-serif;
+        color: #222;
+        word-wrap: break-word;
+    }
+    .song-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #2e3b55;
+        margin-bottom: 4px;
+    }
+    .song-meta {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+    .song-link {
+        font-size: 0.9rem;
+        color: #007acc;
+    }
+    @media (max-width: 768px) {
+        .song-title {
+            font-size: 1rem;
+        }
+        .song-meta {
+            font-size: 0.85rem;
+        }
+        .song-card {
+            padding: 14px;
+        }
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 if query:
     if results.empty:
         st.warning("No matching songs found. Try adjusting your query or speed filter.")
@@ -122,13 +168,9 @@ if query:
                 </div>
             """, unsafe_allow_html=True)
 
-        if visible_count < len(results):
+        if visible_count < 10:
             if st.button("🎵 See More"):
                 st.session_state.visible_count += 1
-else:
-    st.info("Type a query to start finding songs.")
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Popup Button for Submission ---
 with st.expander("➕ Add a New Worship Song"):
