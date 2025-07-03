@@ -4,3 +4,4 @@ numpy
 sentence-transformers
 faiss-cpu
 scikit-learn
+validators
