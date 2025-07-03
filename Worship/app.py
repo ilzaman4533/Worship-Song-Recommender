@@ -4,24 +4,30 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 import faiss
 import numpy as np
 import re
+import os
+import validators
 
 st.set_page_config(page_title="Worship Song Recommender", layout="centered")
 
+DATA_PATH = 'Worship/data/worship_songs.csv'
+
 @st.cache_resource
 def load_resources():
-    df = pd.read_csv('Worship/data/worship_songs.csv')
+    df = pd.read_csv(DATA_PATH)
+    if 'added_by' not in df.columns:
+        df['added_by'] = ''
     df['search_text'] = df['speed'] + ' ' + df['themes'] + ' ' + df['title'] + ' ' + df['artist']
-    
+
     bi_encoder = SentenceTransformer('all-mpnet-base-v2')
     embeddings = bi_encoder.encode(df['search_text'].tolist(), convert_to_numpy=True)
     faiss.normalize_L2(embeddings)
-    
+
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatIP(dimension)
     index.add(embeddings)
-    
+
     cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
-    
+
     return df, bi_encoder, embeddings, index, cross_encoder
 
 df, bi_encoder, embeddings, index, cross_encoder = load_resources()
@@ -30,13 +36,13 @@ def extract_speed_filter(query):
     query_lower = query.lower()
     if re.search(r"\b(slow|slower|slowly)\b", query_lower):
         return "slow"
-    elif re.search(r"\b(mid|middle|medium|moderate|mid-tempo|midtempo)\b", query_lower):
+    elif re.search(r"\b(mid|middle|medium|moderate|mid-tempo\midtempo)\b", query_lower):
         return "middle"
     elif re.search(r"\b(fast|faster|quick|upbeat)\b", query_lower):
         return "fast"
     return None
 
-def recommend(query, top_k=20, candidate_pool=len(df)):
+def recommend(query, top_k=20, candidate_pool=50):
     speed_filter = extract_speed_filter(query)
 
     filtered_df = df
@@ -56,12 +62,8 @@ def recommend(query, top_k=20, candidate_pool=len(df)):
     temp_index.add(local_embeddings)
     distances, candidate_idxs = temp_index.search(query_emb, candidate_pool)
 
-    # Get candidate rows
     raw_candidates = filtered_df.iloc[candidate_idxs[0]].copy()
-
-    # Drop exact duplicates by title + artist
     candidates = raw_candidates.drop_duplicates(subset=['title', 'artist']).reset_index(drop=True)
-
 
     cross_inputs = [
         (query, row['speed'] + " " + row['themes'] + " " + row['lyrics']) 
@@ -70,59 +72,85 @@ def recommend(query, top_k=20, candidate_pool=len(df)):
     cross_scores = cross_encoder.predict(cross_inputs)
 
     candidates['score'] = cross_scores
-
-    # Stable sort to prevent shuffling or duplicate views
     candidates = candidates.sort_values(by=['score', 'title'], ascending=[False, True]).head(top_k)
 
     return candidates.reset_index(drop=True)
 
-
-# --- UI Styling ---
+# --- Styled Submission Section ---
 st.markdown("""
     <style>
-    .responsive-container {
-        max-width: 700px;
-        margin: auto;
-        padding: 10px;
-    }
-    .song-card {
-        background-color: #f9f9f9;
-        padding: 18px;
-        border-radius: 12px;
-        margin-bottom: 16px;
-        box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+    .submission-card {
+        background-color: #eef6f9;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.06);
         font-family: 'Segoe UI', sans-serif;
-        color: #222;
-        word-wrap: break-word;
-    }
-    .song-title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #2e3b55;
-        margin-bottom: 4px;
-    }
-    .song-meta {
-        font-size: 0.95rem;
-        margin-bottom: 8px;
-    }
-    .song-link {
-        font-size: 0.9rem;
-        color: #007acc;
-    }
-    @media (max-width: 768px) {
-        .song-title {
-            font-size: 1rem;
-        }
-        .song-meta {
-            font-size: 0.85rem;
-        }
-        .song-card {
-            padding: 14px;
-        }
+        color: #1d3557;
+        margin-top: 32px;
     }
     </style>
 """, unsafe_allow_html=True)
 
+st.markdown("<div class='submission-card'>", unsafe_allow_html=True)
+st.markdown("### 📤 Submit a New Worship Song")
+with st.form("song_submission_form", clear_on_submit=True):
+    new_title = st.text_input("🎵 Song Title")
+    new_artist = st.text_input("👤 Artist")
+    new_themes = st.text_input("🏷️ Themes (comma separated)")
+    new_speed = st.selectbox("🚦 Speed", ["slow", "middle", "fast"])
+    new_link = st.text_input("🔗 Link to Chords/Lyrics")
+    new_lyrics = st.text_area("📜 Lyrics")
+    new_added_by = st.text_input("🙋 Added by (Your Name)")
+
+    submitted = st.form_submit_button("Submit Song")
+
+    if submitted:
+        if not validators.url(new_link):
+            st.error("❌ Please enter a valid URL for the chord/lyrics link.")
+        elif not new_title or not new_artist or not new_added_by:
+            st.error("❌ Title, artist, and your name are required.")
+        else:
+            song_exists = df[
+                (df['title'].str.lower() == new_title.lower()) &
+                (df['artist'].str.lower() == new_artist.lower())
+            ]
+
+            if not song_exists.empty:
+                overwrite = st.radio("⚠️ This song already exists. Do you want to overwrite it?", ("Cancel", "Overwrite"))
+                if overwrite == "Overwrite":
+                    df.drop(song_exists.index, inplace=True)
+                    new_entry = pd.DataFrame([{
+                        'title': new_title,
+                        'artist': new_artist,
+                        'themes': new_themes,
+                        'speed': new_speed,
+                        'pnwchords_link': new_link,
+                        'lyrics': new_lyrics,
+                        'added_by': new_added_by,
+                        'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
+                    }])
+                    df_updated = pd.concat([df, new_entry], ignore_index=True)
+                    df_updated.to_csv(DATA_PATH, index=False)
+                    st.success("✅ Song updated successfully. Please reload to reflect changes in recommendations.")
+                else:
+                    st.info("❌ Submission cancelled.")
+            else:
+                new_entry = pd.DataFrame([{
+                    'title': new_title,
+                    'artist': new_artist,
+                    'themes': new_themes,
+                    'speed': new_speed,
+                    'pnwchords_link': new_link,
+                    'lyrics': new_lyrics,
+                    'added_by': new_added_by,
+                    'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
+                }])
+                df_updated = pd.concat([df, new_entry], ignore_index=True)
+                df_updated.to_csv(DATA_PATH, index=False)
+                st.success("✅ Song added successfully. Please reload to reflect changes in recommendations.")
+st.markdown("</div>", unsafe_allow_html=True)
+
+# --- Song Display ---
 st.markdown("<div class='responsive-container'>", unsafe_allow_html=True)
 st.markdown("<h1 style='text-align: center;'>🎵 Worship Song Recommender</h1>", unsafe_allow_html=True)
 st.write("Enter themes, phrases, or song speed like **'slow'**, **'middle'**, or **'fast'** to get worship song suggestions.")
@@ -163,14 +191,14 @@ if query:
                     <div class="song-meta"><strong>Score:</strong> {row['score']:.4f}</div>
                     <div class="song-meta"><strong>Themes:</strong> {row['themes']}</div>
                     <div class="song-meta"><strong>Speed:</strong> {row['speed'].capitalize()}</div>
+                    <div class="song-meta"><strong>Added by:</strong> {row['added_by']}</div>
                     <a class="song-link" href="{row['pnwchords_link']}" target="_blank">🔗 View on PNWChords</a>
                 </div>
             """, unsafe_allow_html=True)
 
-        if visible_count < 10:
+        if visible_count < len(results):
             if st.button("🎵 See More"):
                 st.session_state.visible_count += 1
-
 else:
     st.info("Type a query to start finding songs.")
 
