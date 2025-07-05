@@ -229,7 +229,7 @@ with st.expander("➕ Add a New Worship Song"):
                             new_link, new_lyrics.replace("\n", ""), new_added_by
                         ])
                         st.success("✅ Song overwritten in Google Sheets.")
-                        st.cache.clear()
+                        st.cache_resource.clear()
                         st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
                         st.session_state.overwrite_radio = "Choose an option"  # reset
                         st.stop()
@@ -245,7 +245,7 @@ with st.expander("➕ Add a New Worship Song"):
                         new_link, new_lyrics.replace("\n", ""), new_added_by
                     ])
                     st.success("✅ Song saved to Google Sheets.")
-                    st.cache.clear()
+                    st.cache_resource.clear()
                     st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
 
 # Results
