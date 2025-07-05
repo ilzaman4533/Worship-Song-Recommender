@@ -189,8 +189,7 @@ with st.expander("➕ Add a New Worship Song"):
                 df_updated = pd.concat([df, new_entry], ignore_index=True)
                 df_updated.to_csv(DATA_PATH, index=False)
                 st.cache_resource.clear()
-                st.success("✅ Song saved to database. Reloading...")
-                st.experimental_rerun()
+                st.success("✅ Song saved to database. Reload to Update.")
 
 if query:
     if results.empty:
