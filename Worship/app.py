@@ -7,13 +7,19 @@ import re
 import validators
 import gspread
 from google.oauth2.service_account import Credentials
+import json
 
 st.set_page_config(page_title="Worship Song Recommender", layout="centered")
 
 # Google Sheets Setup
 SHEET_NAME = "worship_songs"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+
+creds = Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"],
+    scopes=["https://www.googleapis.com/auth/spreadsheets"]
+)
+
 client = gspread.authorize(creds)
 sheet = client.open(SHEET_NAME).sheet1
 
