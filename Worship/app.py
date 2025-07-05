@@ -233,14 +233,12 @@ with st.expander("➕ Add a New Worship Song"):
                         st.session_state.show_overwrite_radio = False
                         st.cache_resource.clear()
                         st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
-                        st.session_state.overwrite_radio = "Choose an option"  # reset
                         st.stop()
                     
 
                     elif overwrite_option == "Cancel":
                         st.info("❌ Submission cancelled.")
                         st.session_state.show_overwrite_radio = False
-                        st.session_state.overwrite_radio = "Choose an option"  # reset
                         st.stop()
                 else:
                     # New song — proceed to add
