@@ -4,16 +4,24 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 import faiss
 import numpy as np
 import re
-import os
 import validators
+import gspread
+from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="Worship Song Recommender", layout="centered")
 
-DATA_PATH = 'Worship/data/worship_songs.csv'
+# Google Sheets Setup
+SHEET_NAME = "worship_songs"
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+client = gspread.authorize(creds)
+sheet = client.open(SHEET_NAME).sheet1
 
+# Load data
 @st.cache_resource
 def load_resources():
-    df = pd.read_csv(DATA_PATH)
+    data = sheet.get_all_records()
+    df = pd.DataFrame(data)
     if 'added_by' not in df.columns:
         df['added_by'] = ''
     df['search_text'] = df['speed'] + ' ' + df['themes'] + ' ' + df['title'] + ' ' + df['artist']
@@ -36,7 +44,7 @@ def extract_speed_filter(query):
     query_lower = query.lower()
     if re.search(r"\b(slow|slower|slowly)\b", query_lower):
         return "slow"
-    elif re.search(r"\b(mid|middle|medium|moderate|mid-tempo|midtempo)\b", query_lower):
+    elif re.search(r"\b(mid|middle|medium|moderate)\b", query_lower):
         return "middle"
     elif re.search(r"\b(fast|faster|quick|upbeat)\b", query_lower):
         return "fast"
@@ -76,7 +84,7 @@ def recommend(query, top_k=20, candidate_pool=len(df)):
 
     return candidates.reset_index(drop=True)
 
-# --- Song Display ---
+# UI
 st.markdown("<div class='responsive-container'>", unsafe_allow_html=True)
 st.markdown("<h1 style='text-align: center;'>🎵 Worship Song Recommender</h1>", unsafe_allow_html=True)
 st.write("Enter themes, phrases, or song speed like **'slow'**, **'middle'**, or **'fast'** to get worship song suggestions.")
@@ -98,53 +106,52 @@ if query and query != st.session_state.last_query:
 results = st.session_state.results
 visible_count = st.session_state.visible_count
 
-# --- UI Styling ---
 st.markdown("""
-    <style>
-    .responsive-container {
-        max-width: 700px;
-        margin: auto;
-        padding: 10px;
-    }
-    .song-card {
-        background-color: #f9f9f9;
-        padding: 18px;
-        border-radius: 12px;
-        margin-bottom: 16px;
-        box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
-        font-family: 'Segoe UI', sans-serif;
-        color: #222;
-        word-wrap: break-word;
-    }
+<style>
+.responsive-container {
+    max-width: 700px;
+    margin: auto;
+    padding: 10px;
+}
+.song-card {
+    background-color: #f9f9f9;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+    font-family: 'Segoe UI', sans-serif;
+    color: #222;
+    word-wrap: break-word;
+}
+.song-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2e3b55;
+    margin-bottom: 4px;
+}
+.song-meta {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+.song-link {
+    font-size: 0.9rem;
+    color: #007acc;
+}
+@media (max-width: 768px) {
     .song-title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #2e3b55;
-        margin-bottom: 4px;
+        font-size: 1rem;
     }
     .song-meta {
-        font-size: 0.95rem;
-        margin-bottom: 8px;
+        font-size: 0.85rem;
     }
-    .song-link {
-        font-size: 0.9rem;
-        color: #007acc;
+    .song-card {
+        padding: 14px;
     }
-    @media (max-width: 768px) {
-        .song-title {
-            font-size: 1rem;
-        }
-        .song-meta {
-            font-size: 0.85rem;
-        }
-        .song-card {
-            padding: 14px;
-        }
-    }
-    </style>
+}
+</style>
 """, unsafe_allow_html=True)
 
-# --- Popup Button for Submission ---
+# Submission form
 with st.expander("➕ Add a New Worship Song"):
     with st.form("song_submission_form", clear_on_submit=True):
         new_title = st.text_input("🎵 Song Title")
@@ -163,10 +170,12 @@ with st.expander("➕ Add a New Worship Song"):
             elif not new_title or not new_artist or not new_added_by:
                 st.error("❌ Title, artist, and your name are required.")
             else:
-                df = pd.read_csv(DATA_PATH)
-                song_exists = df[
-                    (df['title'].str.lower() == new_title.lower()) &
-                    (df['artist'].str.lower() == new_artist.lower())
+                # Check for existing song
+                data = sheet.get_all_records()
+                existing_df = pd.DataFrame(data)
+                song_exists = existing_df[
+                    (existing_df['title'].str.lower() == new_title.lower()) &
+                    (existing_df['artist'].str.lower() == new_artist.lower())
                 ]
 
                 if not song_exists.empty:
@@ -175,22 +184,16 @@ with st.expander("➕ Add a New Worship Song"):
                         st.info("❌ Submission cancelled.")
                         st.stop()
                     else:
-                        df.drop(song_exists.index, inplace=True)
+                        # Overwrite by removing and re-appending
+                        match_idx = song_exists.index[0] + 2  # account for 1-based row index and header
+                        sheet.delete_row(match_idx)
 
-                new_entry = pd.DataFrame([{
-                    'title': new_title,
-                    'artist': new_artist,
-                    'themes': new_themes,
-                    'speed': new_speed,
-                    'pnwchords_link': new_link,
-                    'lyrics': new_lyrics,
-                    'added_by': new_added_by
-                }])
-                df_updated = pd.concat([df, new_entry], ignore_index=True)
-                df_updated.to_csv(DATA_PATH, index=False)
-                st.cache_resource.clear()
-                st.success("✅ Song saved to database. Reload to Update.")
+                sheet.append_row([
+                    new_title, new_artist, new_themes, new_speed, new_link, new_lyrics, new_added_by
+                ])
+                st.success("✅ Song saved to Google Sheets. Please reload the page to see it in recommendations.")
 
+# Results
 if query:
     if results.empty:
         st.warning("No matching songs found. Try adjusting your query or speed filter.")
@@ -214,6 +217,11 @@ if query:
                     <a class="song-link" href="{row['pnwchords_link']}" target="_blank">🔗 View on PNWChords</a>
                 </div>
             """, unsafe_allow_html=True)
+
+        if visible_count < 10:
+            if st.button("🎵 See More"):
+                st.session_state.visible_count += 1
+
 
         if visible_count < 10:
             if st.button("🎵 See More"):
