@@ -223,7 +223,7 @@ with st.expander("➕ Add a New Worship Song"):
                     if overwrite_option == "Overwrite":
                         # perform overwrite
                         match_idx = song_exists.index[0] + 2
-                        sheet.delete_row(match_idx)
+                        sheet.delete_rows(match_idx)
                         sheet.append_row([
                             new_title, new_artist, new_themes, new_speed,
                             new_link, new_lyrics.replace("\n", ""), new_added_by
