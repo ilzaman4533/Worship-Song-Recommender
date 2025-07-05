@@ -160,20 +160,45 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Submission form
+# Submission Form
 with st.expander("➕ Add a New Worship Song"):
-    with st.form("song_submission_form", clear_on_submit=True):
-        new_title = st.text_input("🎵 Song Title")
-        new_artist = st.text_input("👤 Artist")
-        new_themes = st.text_input("🏷️ Themes (comma separated)")
-        new_speed = st.selectbox("🚦 Speed", ["slow", "middle", "fast"])
-        new_link = st.text_input("🔗 Link to Chords/Lyrics")
-        new_lyrics = st.text_area("📜 Lyrics")
-        new_added_by = st.text_input("🙋 Added by (Your Name)")
+    # Use session_state to persist form inputs if submission fails
+    form_key = "song_submission_form"
+
+    if "form_data" not in st.session_state:
+        st.session_state.form_data = {
+            "title": "",
+            "artist": "",
+            "themes": "",
+            "speed": "slow",
+            "link": "",
+            "lyrics": "",
+            "added_by": ""
+        }
+
+    with st.form(form_key, clear_on_submit=False):
+        new_title = st.text_input("🎵 Song Title", value=st.session_state.form_data["title"])
+        new_artist = st.text_input("👤 Artist", value=st.session_state.form_data["artist"])
+        new_themes = st.text_input("🏷️ Themes (comma separated)", value=st.session_state.form_data["themes"])
+        new_speed = st.selectbox("🚦 Speed", ["slow", "middle", "fast"], index=["slow", "middle", "fast"].index(st.session_state.form_data["speed"]))
+        new_link = st.text_input("🔗 Link to Chords/Lyrics", value=st.session_state.form_data["link"])
+        new_lyrics = st.text_area("📜 Lyrics", value=st.session_state.form_data["lyrics"])
+        new_added_by = st.text_input("🙋 Added by (Your Name)", value=st.session_state.form_data["added_by"])
 
         submitted = st.form_submit_button("Submit Song")
 
         if submitted:
+            # Save current state in case of validation failure
+            st.session_state.form_data = {
+                "title": new_title,
+                "artist": new_artist,
+                "themes": new_themes,
+                "speed": new_speed,
+                "link": new_link,
+                "lyrics": new_lyrics,
+                "added_by": new_added_by
+            }
+
             if not validators.url(new_link):
                 st.error("❌ Please enter a valid URL for the chord/lyrics link.")
             elif not new_title or not new_artist or not new_added_by:
@@ -188,21 +213,34 @@ with st.expander("➕ Add a New Worship Song"):
                 ]
 
                 if not song_exists.empty:
-                    overwrite = st.radio("⚠️ This song already exists. Do you want to overwrite it?", ("Cancel", "Overwrite"))
-                    if overwrite == "Cancel":
-                        st.info("❌ Submission cancelled.")
-                        st.stop()
-                    else:
-                        # Overwrite by removing and re-appending
-                        match_idx = song_exists.index[0] + 2  # account for 1-based row index and header
-                        sheet.delete_row(match_idx)
-                if "\n" in new_lyrics:
-                    new_lyrics = new_lyrics.replace('\n', '')
-                sheet.append_row([
-                    new_title, new_artist, new_themes, new_speed, new_link, new_lyrics, new_added_by
-                ])
-                st.success("✅ Song saved to Google Sheets. Please reload the page to see it in recommendations.")
-                st.cache.clear()
+                    st.warning("⚠️ This song already exists. Do you want to overwrite it?")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("✅ Overwrite", key="overwrite_button"):
+                            match_idx = song_exists.index[0] + 2  # header + 1-based index
+                            sheet.delete_row(match_idx)
+                            sheet.append_row([
+                                new_title, new_artist, new_themes, new_speed,
+                                new_link, new_lyrics.replace("\n", ""), new_added_by
+                            ])
+                            st.success("✅ Song overwritten in Google Sheets.")
+                            st.cache.clear()
+                            st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
+                    with col2:
+                        if st.button("❌ Cancel Overwrite", key="cancel_button"):
+                            st.info("Submission cancelled.")
+                    st.stop()
+
+                else:
+                    # New song — proceed to add
+                    sheet.append_row([
+                        new_title, new_artist, new_themes, new_speed,
+                        new_link, new_lyrics.replace("\n", ""), new_added_by
+                    ])
+                    st.success("✅ Song saved to Google Sheets.")
+                    st.cache.clear()
+                    st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
+
 # Results
 if query:
     if results.empty:
