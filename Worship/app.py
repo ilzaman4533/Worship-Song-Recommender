@@ -245,7 +245,7 @@ with st.expander("➕ Add a New Worship Song"):
                     elif overwrite_option == "Cancel":
                         st.info("❌ Submission cancelled.")
                         st.session_state.show_overwrite_radio = False
-                        st.stop()
+                        st.session_state.form_data = {k: "" if k != "speed" else "slow" for k in st.session_state.form_data}
                 else:
                     # New song — proceed to add
                     sheet.append_row([
