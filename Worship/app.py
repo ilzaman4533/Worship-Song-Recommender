@@ -226,7 +226,7 @@ with st.expander("➕ Add a New Worship Song"):
                         sheet.delete_rows(match_idx)
                         sheet.append_row([
                             new_title, new_artist, new_themes, new_speed,
-                            new_link, new_lyrics.replace("\n", ""), new_added_by
+                            new_link, new_lyrics.replace("\n", " "), new_added_by
                         ])
                         st.success("✅ Song overwritten in Google Sheets.")
                         st.cache_resource.clear()
