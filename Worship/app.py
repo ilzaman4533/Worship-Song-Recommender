@@ -196,7 +196,8 @@ with st.expander("➕ Add a New Worship Song"):
                         # Overwrite by removing and re-appending
                         match_idx = song_exists.index[0] + 2  # account for 1-based row index and header
                         sheet.delete_row(match_idx)
-
+                if "\n" in new_lyrics:
+                    new_lyrics = new_lyrics.replace('\n', '')
                 sheet.append_row([
                     new_title, new_artist, new_themes, new_speed, new_link, new_lyrics, new_added_by
                 ])
