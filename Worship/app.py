@@ -230,9 +230,3 @@ if query:
         if visible_count < 10:
             if st.button("🎵 See More"):
                 st.session_state.visible_count += 1
-
-
-        if visible_count < 10:
-            if st.button("🎵 See More"):
-                st.session_state.visible_count += 1
-
