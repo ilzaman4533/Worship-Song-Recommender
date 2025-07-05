@@ -238,14 +238,30 @@ with st.expander("➕ Add a New Worship Song"):
                         st.success("✅ Song overwritten in Google Sheets. Reload to Update.")
                         st.session_state.show_overwrite_radio = False
                         st.cache_resource.clear()
-                        st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
+                        st.session_state.form_data = {
+                            "title": "",
+                            "artist": "",
+                            "themes": "",
+                            "speed": "slow",
+                            "link": "",
+                            "lyrics": "",
+                            "added_by": ""
+                        }
                         st.stop()
                     
 
                     elif overwrite_option == "Cancel":
                         st.info("❌ Submission cancelled.")
                         st.session_state.show_overwrite_radio = False
-                        st.session_state.form_data = {k: "" if k != "speed" else "slow" for k in st.session_state.form_data}
+                        st.session_state.form_data = {
+                            "title": "",
+                            "artist": "",
+                            "themes": "",
+                            "speed": "slow",
+                            "link": "",
+                            "lyrics": "",
+                            "added_by": ""
+                        }
                 else:
                     # New song — proceed to add
                     sheet.append_row([
@@ -254,7 +270,15 @@ with st.expander("➕ Add a New Worship Song"):
                     ])
                     st.success("✅ Song saved to Google Sheets. Reload to Update.")
                     st.cache_resource.clear()
-                    st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
+                    st.session_state.form_data = {
+                        "title": "",
+                        "artist": "",
+                        "themes": "",
+                        "speed": "slow",
+                        "link": "",
+                        "lyrics": "",
+                        "added_by": ""
+                    }
 
 # Results
 if query:
