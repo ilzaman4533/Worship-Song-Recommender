@@ -42,7 +42,7 @@ def extract_speed_filter(query):
         return "fast"
     return None
 
-def recommend(query, top_k=20, candidate_pool=len(df))):
+def recommend(query, top_k=20, candidate_pool=len(df)):
     speed_filter = extract_speed_filter(query)
 
     filtered_df = df
