@@ -180,7 +180,13 @@ with st.expander("➕ Add a New Worship Song"):
         new_title = st.text_input("🎵 Song Title", value=st.session_state.form_data["title"])
         new_artist = st.text_input("👤 Artist", value=st.session_state.form_data["artist"])
         new_themes = st.text_input("🏷️ Themes (comma separated)", value=st.session_state.form_data["themes"])
-        new_speed = st.selectbox("🚦 Speed", ["slow", "middle", "fast"], index=["slow", "middle", "fast"].index(st.session_state.form_data["speed"]))
+        speed_options = ["slow", "middle", "fast"]
+        try:
+            speed_index = speed_options.index(st.session_state.form_data["speed"])
+        except ValueError:
+            speed_index = 0  # default to "slow" if invalid
+        
+        new_speed = st.selectbox("🚦 Speed", speed_options, index=speed_index)
         new_link = st.text_input("🔗 Link to Chords/Lyrics", value=st.session_state.form_data["link"])
         new_lyrics = st.text_area("📜 Lyrics", value=st.session_state.form_data["lyrics"])
         new_added_by = st.text_input("🙋 Added by (Your Name)", value=st.session_state.form_data["added_by"])
