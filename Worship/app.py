@@ -235,7 +235,7 @@ with st.expander("➕ Add a New Worship Song"):
                             new_title, new_artist, new_themes, new_speed,
                             new_link, new_lyrics.replace("\n", " "), new_added_by
                         ])
-                        st.success("✅ Song overwritten in Google Sheets. Reload to Update.")
+                        st.success("✅ Song overwritten in Google Sheets.")
                         st.session_state.show_overwrite_radio = False
                         st.cache_resource.clear()
                         st.session_state.form_data = {
@@ -247,7 +247,7 @@ with st.expander("➕ Add a New Worship Song"):
                             "lyrics": "",
                             "added_by": ""
                         }
-                        st.stop()
+                        st.rerun()
                     
 
                     elif overwrite_option == "Cancel":
@@ -262,13 +262,14 @@ with st.expander("➕ Add a New Worship Song"):
                             "lyrics": "",
                             "added_by": ""
                         }
+                        st.rerun()
                 else:
                     # New song — proceed to add
                     sheet.append_row([
                         new_title, new_artist, new_themes, new_speed,
                         new_link, new_lyrics.replace("\n", ""), new_added_by
                     ])
-                    st.success("✅ Song saved to Google Sheets. Reload to Update.")
+                    st.success("✅ Song saved to Google Sheets.")
                     st.cache_resource.clear()
                     st.session_state.form_data = {
                         "title": "",
@@ -279,6 +280,7 @@ with st.expander("➕ Add a New Worship Song"):
                         "lyrics": "",
                         "added_by": ""
                     }
+                    st.rerun()
 
 # Results
 if query:
