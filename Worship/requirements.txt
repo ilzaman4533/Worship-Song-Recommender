@@ -5,3 +5,5 @@ sentence-transformers
 faiss-cpu
 scikit-learn
 validators
+gspread
+oauth2client
