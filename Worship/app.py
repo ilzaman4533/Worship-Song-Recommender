@@ -213,24 +213,31 @@ with st.expander("➕ Add a New Worship Song"):
                 ]
 
                 if not song_exists.empty:
-                    st.warning("⚠️ This song already exists. Do you want to overwrite it?")
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("✅ Overwrite", key="overwrite_button"):
-                            match_idx = song_exists.index[0] + 2  # header + 1-based index
-                            sheet.delete_row(match_idx)
-                            sheet.append_row([
-                                new_title, new_artist, new_themes, new_speed,
-                                new_link, new_lyrics.replace("\n", ""), new_added_by
-                            ])
-                            st.success("✅ Song overwritten in Google Sheets.")
-                            st.cache.clear()
-                            st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
-                    with col2:
-                        if st.button("❌ Cancel Overwrite", key="cancel_button"):
-                            st.info("Submission cancelled.")
-                    st.stop()
-
+                    overwrite_option = st.radio(
+                        "⚠️ This song already exists. Do you want to overwrite it?",
+                        options=["Choose an option", "Cancel", "Overwrite"],
+                        index=0,
+                        key="overwrite_radio"
+                    )
+                    
+                    if overwrite_option == "Overwrite":
+                        # perform overwrite
+                        match_idx = song_exists.index[0] + 2
+                        sheet.delete_row(match_idx)
+                        sheet.append_row([
+                            new_title, new_artist, new_themes, new_speed,
+                            new_link, new_lyrics.replace("\n", ""), new_added_by
+                        ])
+                        st.success("✅ Song overwritten in Google Sheets.")
+                        st.cache.clear()
+                        st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
+                        st.session_state.overwrite_radio = "Choose an option"  # reset
+                        st.stop()
+                    
+                    elif overwrite_option == "Cancel":
+                        st.info("❌ Submission cancelled.")
+                        st.session_state.overwrite_radio = "Choose an option"  # reset
+                        st.stop()
                 else:
                     # New song — proceed to add
                     sheet.append_row([
