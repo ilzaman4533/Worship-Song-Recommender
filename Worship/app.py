@@ -42,7 +42,7 @@ def extract_speed_filter(query):
         return "fast"
     return None
 
-def recommend(query, top_k=20, candidate_pool=50):
+def recommend(query, top_k=20, candidate_pool=len(df))):
     speed_filter = extract_speed_filter(query)
 
     filtered_df = df
@@ -179,10 +179,9 @@ with st.expander("➕ Add a New Worship Song"):
                             'pnwchords_link': new_link,
                             'lyrics': new_lyrics,
                             'added_by': new_added_by,
-                            'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
                         }])
                         df_updated = pd.concat([df, new_entry], ignore_index=True)
-                        df_updated.to_csv(DATA_PATH, index=False)
+                        df = df_updated
                         st.success("✅ Song updated successfully. Please reload to reflect changes in recommendations.")
                     else:
                         st.info("❌ Submission cancelled.")
@@ -195,10 +194,9 @@ with st.expander("➕ Add a New Worship Song"):
                         'pnwchords_link': new_link,
                         'lyrics': new_lyrics,
                         'added_by': new_added_by,
-                        'search_text': f"{new_speed} {new_themes} {new_title} {new_artist}"
                     }])
                     df_updated = pd.concat([df, new_entry], ignore_index=True)
-                    df_updated.to_csv(DATA_PATH, index=False)
+                    df = df_updated
                     st.success("✅ Song added successfully. Please reload to reflect changes in recommendations.")
 
 if query:
