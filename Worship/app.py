@@ -228,15 +228,13 @@ with st.expander("➕ Add a New Worship Song"):
                             new_title, new_artist, new_themes, new_speed,
                             new_link, new_lyrics.replace("\n", " "), new_added_by
                         ])
-                        st.success("✅ Song overwritten in Google Sheets.")
+                        st.success("✅ Song overwritten in Google Sheets. Reload to Update.")
                         st.cache_resource.clear()
                         st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
-                        st.session_state.overwrite_radio = "Choose an option"  # reset
                         st.stop()
                     
                     elif overwrite_option == "Cancel":
                         st.info("❌ Submission cancelled.")
-                        st.session_state.overwrite_radio = "Choose an option"  # reset
                         st.stop()
                 else:
                     # New song — proceed to add
@@ -244,7 +242,7 @@ with st.expander("➕ Add a New Worship Song"):
                         new_title, new_artist, new_themes, new_speed,
                         new_link, new_lyrics.replace("\n", ""), new_added_by
                     ])
-                    st.success("✅ Song saved to Google Sheets.")
+                    st.success("✅ Song saved to Google Sheets. Reload to Update.")
                     st.cache_resource.clear()
                     st.session_state.form_data = {k: "" if isinstance(v, str) else "slow" for k, v in st.session_state.form_data.items()}
 
