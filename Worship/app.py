@@ -13,11 +13,14 @@ st.set_page_config(page_title="Worship Song Recommender", layout="centered")
 
 # Google Sheets Setup
 SHEET_NAME = "worship"
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
 
 creds = Credentials.from_service_account_info(
     st.secrets["gcp_service_account"],
-    scopes=["https://www.googleapis.com/auth/spreadsheets"]
+    scopes=SCOPES
 )
 
 client = gspread.authorize(creds)
