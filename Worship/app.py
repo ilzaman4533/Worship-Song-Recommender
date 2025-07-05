@@ -202,7 +202,7 @@ with st.expander("➕ Add a New Worship Song"):
                     new_title, new_artist, new_themes, new_speed, new_link, new_lyrics, new_added_by
                 ])
                 st.success("✅ Song saved to Google Sheets. Please reload the page to see it in recommendations.")
-
+                st.cache.clear()
 # Results
 if query:
     if results.empty:
