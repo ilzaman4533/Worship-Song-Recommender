@@ -12,7 +12,7 @@ import json
 st.set_page_config(page_title="Worship Song Recommender", layout="centered")
 
 # Google Sheets Setup
-SHEET_NAME = "worship_songs"
+SHEET_NAME = "worship"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 creds = Credentials.from_service_account_info(
