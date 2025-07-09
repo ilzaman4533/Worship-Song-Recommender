@@ -53,7 +53,7 @@ def extract_speed_filter(query):
     query_lower = query.lower()
     if re.search(r"\b(slow|slower|slowly)\b", query_lower):
         return "slow"
-    elif re.search(r"\b(mid|middle|medium|moderate)\b", query_lower):
+    elif re.search(r"\b(mid|middle|medium|moderate|mid-tempo|midtempo)\b", query_lower):
         return "middle"
     elif re.search(r"\b(fast|faster|quick|upbeat)\b", query_lower):
         return "fast"
@@ -304,7 +304,7 @@ if query:
                     <div class="song-meta"><strong>Themes:</strong> {row['themes']}</div>
                     <div class="song-meta"><strong>Speed:</strong> {row['speed'].capitalize()}</div>
                     <div class="song-meta"><strong>Added by:</strong> {row['added_by']}</div>
-                    <a class="song-link" href="{row['pnwchords_link']}" target="_blank">🔗 View on PNWChords</a>
+                    <a class="song-link" href="{row['chords_link']}" target="_blank">🔗 View Lyrics/Chords</a>
                 </div>
             """, unsafe_allow_html=True)
 
